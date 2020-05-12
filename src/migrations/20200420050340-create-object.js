@@ -16,10 +16,16 @@ module.exports = {
         type: Sequelize.STRING
       },
       stock: {
+        allowNull: false,
         type: Sequelize.INTEGER
       },
       picture: {
         type: Sequelize.STRING
+      },
+      price: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 0
       },
       createdAt: {
         allowNull: false,

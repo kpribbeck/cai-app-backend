@@ -4,25 +4,25 @@ const authMiddle = require('../middlewares/auth');
 const router = new KoaRouter();
 
 
-// @route    GET api/objects
-// @desc     Get all objects
+// @route    GET api/lost_n_founds
+// @desc     Get all lost_n_founds
 // @access   Public
-router.get('objects.list', '/', async (ctx) =>
+router.get('lost_n_founds.list', '/', async (ctx) =>
 {
   try
   {
     console.log("CTX: " + JSON.stringify(ctx));
-    const objectsList = await ctx.orm.object.findAll();
+    const lnfList = await ctx.orm.lostandfound.findAll();
     
     // handle not found
-    if (!objectsList)
+    if (!lnfList)
     {
       ctx.response.status = 404;
       ctx.response.message = "Not found";
       throw new Error("404 Not found.");
     }
 
-    ctx.body = objectsList;
+    ctx.body = lnfList;
   }
   catch(err)
   {
@@ -30,10 +30,10 @@ router.get('objects.list', '/', async (ctx) =>
   }
 });
 
-// @route    GET api/objects/:id
-// @desc     Get object by id
+// @route    GET api/lost_n_founds/:id
+// @desc     Get lost_n_found by id
 // @access   Public
-router.get('objects.view', '/:id', async (ctx) => 
+router.get('lost_n_founds.view', '/:id', async (ctx) => 
 {
   try
   {
@@ -42,20 +42,20 @@ router.get('objects.view', '/:id', async (ctx) =>
     // finds id from the request url
     const url = ctx.request.url;
     let index = url.lastIndexOf('/');
-    let objectId = parseInt(url.substring(index + 1));
+    let lnfId = parseInt(url.substring(index + 1));
 
-    const object = await ctx.orm.object.findByPk(objectId);
+    const lnf = await ctx.orm.lostandfound.findByPk(lnfId);
     
     // handle not found
-    if (!object)
+    if (!lnf)
     {
       ctx.response.status = 404;
       ctx.response.message = "Not found";
       throw new Error("404 Not found.");
     }
 
-    // send object content
-    ctx.body = object;
+    // send lnf content
+    ctx.body = lnf;
 
   }
   catch(err)
@@ -65,21 +65,22 @@ router.get('objects.view', '/:id', async (ctx) =>
 })
 
 
-// @route    POST api/objects 
-// @desc     Create a new object
+// @route    POST api/lost_n_founds 
+// @desc     Create a new lnf
 // @access   Private
-router.post('objects.create', '/', async (ctx) => {
+router.post('lost_n_founds.create', '/', authMiddle, async (ctx) => {
 
-  const object = ctx.orm.object.build(ctx.request.body);
-  object.userId = ctx.request.user.id;
+  const lnf = ctx.orm.lostandfound.build(ctx.request.body);
+  lnf.userId = ctx.request.user.id;
+  console.log("New lnf: " + JSON.stringify(lnf));
 
   try
   {
     // No need to handle duplicates of any kind here
-    await object.save({ fields: ['name', 'description', 'stock', 'picture', 'userId'] });
+    await lnf.save({ fields: ['name', 'description', 'picture', 'pickedBy_name', 'pickedBy_mail', 'pickedBy_phone', 'userId'] });
     ctx.response.status = 201;
     ctx.response.message = "Created";
-    ctx.body = object;
+    ctx.body = lnf;
   }
   catch(err)
   {
@@ -89,45 +90,43 @@ router.post('objects.create', '/', async (ctx) => {
   }
 });
 
-// @route    PUT api/objects/:id
-// @desc     Replace an existing object
+// @route    PUT api/lost_n_founds/:id
+// @desc     Replace an existing lnf
 // @access   Private
-router.put('objects.update', '/:id', authMiddle, async (ctx) => {
-  const newObject = ctx.orm.object.build(ctx.request.body);
+router.put('lost_n_founds.update', '/:id', authMiddle, async (ctx) => {
+  const newLnf = ctx.orm.lostandfound.build(ctx.request.body);
 
   try
   {    
     // finds id from the request url
     const url = ctx.request.url;
     let index = url.lastIndexOf('/');
-    let objectId = parseInt(url.substring(index + 1));
+    let lnfId = parseInt(url.substring(index + 1));
 
-    // Get current object
-    const object = await ctx.orm.object.findByPk(objectId);
+    // Get current lnf
+    const lnf = await ctx.orm.lostandfound.findByPk(lnfId);
 
     // handle not found
-    if (!object)
+    if (!lnf)
     {
       ctx.response.status = 404;
       ctx.response.message = "Not found.";
       throw new Error("404 Not found.");
     }
 
-    // Any authenticated user can modify objects
-    // so no need to check for ownership
+    lnf.name = newLnf.name;
+    lnf.description = newLnf.description;
+    lnf.picture = newLnf.picture;
+    lnf.pickedBy_name = newLnf.pickedBy_name;
+    lnf.pickedBy_mail = newLnf.pickedBy_mail;
+    lnf.pickedBy_phone = newLnf.pickedBy_phone;
 
-    object.name = newObject.name;
-    object.description = newObject.description;
-    object.picture = newObject.picture;
-    object.stock = newObject.stock;
-    object.price = newObject.price;    
+    await lnf.save();
 
-    await object.save();
-
-    // send object content
+    // send lnf content
     ctx.response.status = 200;
     ctx.response.message = "OK";
-    ctx.body = object;
+    ctx.body = lnf;
 
   }
   catch(err)
@@ -141,31 +140,28 @@ router.put('objects.update', '/:id', authMiddle, async (ctx) => {
   }
 });
 
-// @route    DEL api/objects/:id 
-// @desc     Delete an existing object
+// @route    DEL api/lost_n_founds/:id 
+// @desc     Delete an existing lnf
 // @access   Private
-router.del('objects.delete', '/:id', authMiddle, async (ctx) => {
+router.del('lost_n_founds.delete', '/:id', authMiddle, async (ctx) => {
   try
   {    
     // finds id from the request url
     const url = ctx.request.url;
     let index = url.lastIndexOf('/');
-    let objectId = parseInt(url.substring(index + 1));
+    let lnfId = parseInt(url.substring(index + 1));
 
-    const object = await ctx.orm.object.findByPk(objectId);
+    const lnf = await ctx.orm.lostandfound.findByPk(lnfId);
     
     // handle not found
-    if (!object)
+    if (!lnf)
     {
       ctx.response.status = 404;
       ctx.response.message = "Not found";
       throw new Error("404 Not found.");
     }
 
-    // Any authenticated user can modify objects
-    // so no need to check for ownership
-
-    object.destroy();
+    lnf.destroy();
     ctx.response.status = 200;
     ctx.response.message = "OK";
 
@@ -173,8 +169,11 @@ router.del('objects.delete', '/:id', authMiddle, async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 

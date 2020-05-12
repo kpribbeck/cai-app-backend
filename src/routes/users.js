@@ -1,18 +1,15 @@
 const KoaRouter = require('koa-router');
+const authMiddle = require('../middlewares/auth');
 
 const router = new KoaRouter();
 
 const User = require('../models/user');
 
-async function loadUser(ctx, next) {
-    ctx.state.user = await ctx.orm.user.findByPk(ctx.params.id);
-    return next();
-}
 
 // @route    GET api/users
 // @desc     Get all users
-// @access   Public
-router.get('users.list', '/', async (ctx) =>
+// @access   Private
+router.get('users.list', '/', authMiddle, async (ctx) =>
 {
   try
   {
@@ -32,13 +29,18 @@ router.get('users.list', '/', async (ctx) =>
   catch(err)
   {
     console.log(err);
+    if (ctx.response.status !== 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 
 // @route    GET api/users/:id
 // @desc     Get user by id
-// @access   Public
-router.get('users.view', '/:id', async (ctx) => 
+// @access   Private
+router.get('users.view', '/:id', authMiddle, async (ctx) => 
 {
   try
   {
@@ -66,39 +68,20 @@ router.get('users.view', '/:id', async (ctx) =>
   catch(err)
   {
     console.log(err);
+    if (ctx.response.status !== 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 })
-
-
-// @route    POST api/users 
-// @desc     Create a new user
-// @access   Private
-router.post('users.create', '/', async (ctx) => {
-
-  // we need to parse the body received (json) to a javascript object
-  const user = ctx.orm.user.build(JSON.parse(ctx.request.body));
-
-  try
-  {
-    // No need to handle duplicates of any kind here
-    await user.save({ fields: ['user_name', 'password', 'name', 'last_name', 'mail', 'student_id'] });
-    ctx.response.status = 201;
-    ctx.response.message = "Created";
-    ctx.body = user;
-  }
-  catch(err)
-  {
-    console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
-  }
-});
 
 // @route    PUT api/users/:id
 // @desc     Replace an existing user
 // @access   Private
-router.put('users.update', '/:id', async (ctx) => {
-  const newUser = ctx.orm.user.build(JSON.parse(ctx.request.body));
+router.put('users.update', '/:id', authMiddle, async (ctx) => {
+
+  const newUser = ctx.orm.user.build(ctx.request.body);
 
   try
   {    
@@ -139,7 +122,7 @@ router.put('users.update', '/:id', async (ctx) => {
 // @route    DEL api/users/:id 
 // @desc     Delete an existing user
 // @access   Private
-router.del('users.delete', '/:id', async (ctx) => {
+router.del('users.delete', '/:id', authMiddle, async (ctx) => {
   try
   {    
     // finds id from the request url
@@ -157,6 +140,14 @@ router.del('users.delete', '/:id', async (ctx) => {
       throw new Error("404 Not found.");
     }
 
+    // Only self or admin can delete a user
+    if (ctx.request.user.id !== userId && ctx.request.user.is_admin !== 1)
+    {
+      ctx.response.status = 401;
+      ctx.response.message = "Unauthorized.";
+      throw new Error("404 Unauthorized.");
+    }
+
     user.destroy();
     ctx.response.status = 200;
     ctx.response.message = "OK";
@@ -165,8 +156,11 @@ router.del('users.delete', '/:id', async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 

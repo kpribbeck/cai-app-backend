@@ -1,13 +1,8 @@
 const KoaRouter = require('koa-router');
+const authMiddle = require('../middlewares/auth');
 
 const router = new KoaRouter();
 
-const Proyect = require('../models/proyect');
-
-async function loadProyect(ctx, next) {
-    ctx.state.proyect = await ctx.orm.proyect.findByPk(ctx.params.id);
-    return next();
-}
 
 // @route    GET api/proyects
 // @desc     Get all proyects
@@ -73,15 +68,15 @@ router.get('proyects.view', '/:id', async (ctx) =>
 // @route    POST api/proyects 
 // @desc     Create a new proyect
 // @access   Private
-router.post('proyects.create', '/', async (ctx) => {
+router.post('proyects.create', '/', authMiddle, async (ctx) => {
 
-  // we need to parse the body received (json) to a javascript object
-  const proyect = ctx.orm.proyect.build(JSON.parse(ctx.request.body));
+  const proyect = ctx.orm.proyect.build(ctx.request.body);
+  proyect.userId = ctx.request.user.id;
 
   try
   {
     // No need to handle duplicates of any kind here
-    await proyect.save({ fields: ['name', 'description', 'contact', 'picture'] });
+    await proyect.save({ fields: ['name', 'description', 'contact', 'picture', 'userId'] });
     ctx.response.status = 201;
     ctx.response.message = "Created";
     ctx.body = proyect;
@@ -97,8 +92,8 @@ router.post('proyects.create', '/', async (ctx) => {
 // @route    PUT api/proyects/:id
 // @desc     Replace an existing proyect
 // @access   Private
-router.put('proyects.update', '/:id', async (ctx) => {
-  const newProyect = ctx.orm.proyect.build(JSON.parse(ctx.request.body));
+router.put('proyects.update', '/:id', authMiddle, async (ctx) => {
+  const newProyect = ctx.orm.proyect.build(ctx.request.body);
 
   try
   {    
@@ -107,10 +102,8 @@ router.put('proyects.update', '/:id', async (ctx) => {
     let index = url.lastIndexOf('/');
     let proyectId = parseInt(url.substring(index + 1));
 
+    // Get current proyect
     const proyect = await ctx.orm.proyect.findByPk(proyectId);
-
-    proyect.title = newProyect.title;
-    proyect.body = newProyect.body;    
 
     // handle not found
     if (!proyect)
@@ -119,6 +112,20 @@ router.put('proyects.update', '/:id', async (ctx) => {
       ctx.response.message = "Not found.";
       throw new Error("404 Not found.");
     }
+
+    // Check if user is author
+    if (proyect.userId !== ctx.request.user.id)
+    {
+      // Permission denied
+      ctx.response.status = 401;
+      ctx.response.message = "Unauthorized.";
+      throw new Error("401 Unauthorized.");
+    }
+
+    proyect.name = newProyect.name;
+    proyect.description = newProyect.description;
+    proyect.contact = newProyect.contact;
+    proyect.picture = newProyect.picture;
 
     await proyect.save();
 
@@ -131,15 +138,18 @@ router.put('proyects.update', '/:id', async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 
 // @route    DEL api/proyects/:id 
 // @desc     Delete an existing proyect
 // @access   Private
-router.del('proyects.delete', '/:id', async (ctx) => {
+router.del('proyects.delete', '/:id', authMiddle, async (ctx) => {
   try
   {    
     // finds id from the request url
@@ -157,6 +167,15 @@ router.del('proyects.delete', '/:id', async (ctx) => {
       throw new Error("404 Not found.");
     }
 
+    // Check if user owns this story || admin
+    if (proyect.userId !== ctx.request.user.id && ctx.request.user.is_admin != 1)
+    {
+      // Permission denied
+      ctx.response.status = 401;
+      ctx.response.message = "Unauthorized";
+      throw new Error("401 Unauthorized.");
+    }
+
     proyect.destroy();
     ctx.response.status = 200;
     ctx.response.message = "OK";
@@ -165,8 +184,11 @@ router.del('proyects.delete', '/:id', async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 

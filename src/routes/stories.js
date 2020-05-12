@@ -1,4 +1,5 @@
 const KoaRouter = require('koa-router');
+const authMiddle = require('../middlewares/auth');
 
 const router = new KoaRouter();
 
@@ -67,14 +68,16 @@ router.get('stories.view', '/:id', async (ctx) =>
 // @route    POST api/stories 
 // @desc     Create a new story
 // @access   Private
-router.post('stories.create', '/', async (ctx) => {
+router.post('stories.create', '/', authMiddle, async (ctx) => {
 
   const story = ctx.orm.story.build(ctx.request.body);
+  story.userId = ctx.request.user.id;
+  console.log("New story: " + JSON.stringify(story));
 
   try
   {
     // No need to handle duplicates of any kind here
-    await story.save({ fields: ['title', 'body'] });
+    await story.save({ fields: ['title', 'body', 'userId'] });
     ctx.response.status = 201;
     ctx.response.message = "Created";
     ctx.body = story;
@@ -90,7 +93,7 @@ router.post('stories.create', '/', async (ctx) => {
 // @route    PUT api/stories/:id
 // @desc     Replace an existing story
 // @access   Private
-router.put('stories.update', '/:id', async (ctx) => {
+router.put('stories.update', '/:id', authMiddle, async (ctx) => {
   const newStory = ctx.orm.story.build(ctx.request.body);
 
   try
@@ -100,14 +103,8 @@ router.put('stories.update', '/:id', async (ctx) => {
     let index = url.lastIndexOf('/');
     let storyId = parseInt(url.substring(index + 1));
 
+    // Get current story
     const story = await ctx.orm.story.findByPk(storyId);
-
-    console.log("Prev title: " + story.title);
-
-    story.title = newStory.title;
-    story.body = newStory.body;
-
-    console.log("Ne title: " + story.title);
 
     // handle not found
     if (!story)
@@ -116,6 +113,18 @@ router.put('stories.update', '/:id', async (ctx) => {
       ctx.response.message = "Not found.";
       throw new Error("404 Not found.");
     }
+
+    // Check if user is author
+    if (story.userId !== ctx.request.user.id)
+    {
+      // Permission denied
+      ctx.response.status = 401;
+      ctx.response.message = "Unauthorized.";
+      throw new Error("401 Unauthorized.");
+    }
+
+    story.title = newStory.title;
+    story.body = newStory.body;
 
     await story.save();
 
@@ -128,15 +137,18 @@ router.put('stories.update', '/:id', async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 
 // @route    DEL api/stories/:id 
 // @desc     Delete an existing story
 // @access   Private
-router.del('stories.delete', '/:id', async (ctx) => {
+router.del('stories.delete', '/:id', authMiddle, async (ctx) => {
   try
   {    
     // finds id from the request url
@@ -154,6 +166,15 @@ router.del('stories.delete', '/:id', async (ctx) => {
       throw new Error("404 Not found.");
     }
 
+    // Check if user owns this story || admin
+    if (story.userId !== ctx.request.user.id && ctx.request.user.is_admin != 1)
+    {
+      // Permission denied
+      ctx.response.status = 401;
+      ctx.response.message = "Unauthorized";
+      throw new Error("401 Unauthorized.");
+    }
+
     story.destroy();
     ctx.response.status = 200;
     ctx.response.message = "OK";
@@ -162,8 +183,11 @@ router.del('stories.delete', '/:id', async (ctx) => {
   catch(err)
   {
     console.log(err);
-    ctx.response.status = 500;
-    ctx.response.message = "Internal server error.";
+    if (ctx.response.status === 404)
+    {
+      ctx.response.status = 500;
+      ctx.response.message = "Internal server error.";
+    }
   }
 });
 

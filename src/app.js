@@ -13,6 +13,10 @@ const mailer = require('./mailers');
 const routes = require('./routes');
 const orm = require('./models');
 
+const corsOptions = {
+  headers: ['Content-Type', 'Authorization']
+}
+
 // App constructor
 const app = new Koa();
 
