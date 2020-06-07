@@ -16,19 +16,19 @@ module.exports = {
         type: Sequelize.STRING
       },
       picture: {
-        type: Sequelize.BLOB
+        type: Sequelize.STRING
+      },
+      pickedUp: {
+        type: Sequelize.INTEGER,
       },
       pickedBy_name: {
         type: Sequelize.STRING,
-        allowNull: false
       },
       pickedBy_mail: {
         type: Sequelize.STRING,
-        allowNull: false
       },
       pickedBy_phone: {
         type: Sequelize.STRING,
-        allowNull: false
       },
       createdAt: {
         allowNull: false,

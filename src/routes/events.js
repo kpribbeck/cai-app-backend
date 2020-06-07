@@ -11,7 +11,7 @@ router.get('events.list', '/', async (ctx) =>
 {
   try
   {
-    console.log("CTX: " + JSON.stringify(ctx));
+    // console.log("CTX: " + JSON.stringify(ctx));
     const eventsList = await ctx.orm.event.findAll();
     
     // handle not found
@@ -37,7 +37,7 @@ router.get('events.view', '/:id', async (ctx) =>
 {
   try
   {
-    console.log("CTX: " + JSON.stringify(ctx));
+    // console.log("CTX: " + JSON.stringify(ctx));
     
     // finds id from the request url
     const url = ctx.request.url;

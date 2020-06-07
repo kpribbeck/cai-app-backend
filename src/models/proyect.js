@@ -1,9 +1,27 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const proyect = sequelize.define('proyect', {
-    name: DataTypes.STRING,
-    description: DataTypes.STRING,
-    contact: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    contact: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
     picture: DataTypes.STRING
   }, {});
   proyect.associate = function(models) {

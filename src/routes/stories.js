@@ -11,7 +11,7 @@ router.get('stories.list', '/', async (ctx) =>
 {
   try
   {
-    console.log("CTX: " + JSON.stringify(ctx));
+    // console.log("CTX: " + JSON.stringify(ctx));
     const storiesList = await ctx.orm.story.findAll();
     
     // handle not found
@@ -37,7 +37,7 @@ router.get('stories.view', '/:id', async (ctx) =>
 {
   try
   {
-    console.log("CTX: " + JSON.stringify(ctx));
+    // console.log("CTX: " + JSON.stringify(ctx));
     
     // finds id from the request url
     const url = ctx.request.url;
@@ -72,7 +72,7 @@ router.post('stories.create', '/', authMiddle, async (ctx) => {
 
   const story = ctx.orm.story.build(ctx.request.body);
   story.userId = ctx.request.user.id;
-  console.log("New story: " + JSON.stringify(story));
+  // console.log("New story: " + JSON.stringify(story));
 
   try
   {

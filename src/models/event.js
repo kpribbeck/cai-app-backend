@@ -1,9 +1,27 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const event = sequelize.define('event', {
-    title: DataTypes.STRING,
-    description: DataTypes.STRING,
-    organizer: DataTypes.STRING,
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    organizer: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
     place: DataTypes.STRING,
     category: DataTypes.STRING
   }, {});

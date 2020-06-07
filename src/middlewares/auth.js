@@ -12,7 +12,6 @@ module.exports = async function(ctx, next) {
   // console.log("Authorization: " + ctx.request.header.authorization);
   // if (ctx.request.header.authorization)
   //   console.log("TOKEN: " + ctx.request.header.authorization.split(' ')[1]);
-
   
   let token = null;
   

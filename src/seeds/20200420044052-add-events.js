@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
@@ -14,27 +14,29 @@ module.exports = {
     */
     const eventsData = [
       {
-        title: 'This is my first test event',
-        description: 'This story is very interesting... :)',
-        organizer: 'webros',
-        place: 'Cai',
-        category: 'carrete',
+        title: "This is my first test event",
+        description: "This story is very interesting... :)",
+        organizer: "webros",
+        place: "Cai",
+        category: "carrete",
         createdAt: new Date(),
         updatedAt: new Date(),
+        userId: 9,
       },
       {
-        title: 'This is my second test event',
-        description: 'This event is not very interesting... :)',
-        organizer: 'Cai',
-        place: 'La Y',
-        category: 'misa',
+        title: "This is my second test event",
+        description: "This event is not very interesting... :)",
+        organizer: "Cai",
+        place: "La Y",
+        category: "misa",
         createdAt: new Date(),
         updatedAt: new Date(),
+        userId: 9,
       },
     ];
 
-    return queryInterface.bulkInsert('events', eventsData);
+    return queryInterface.bulkInsert("events", eventsData);
   },
 
-  down: (queryInterface) => queryInterface.bulkDelete('events', null, {}),
+  down: (queryInterface) => queryInterface.bulkDelete("events", null, {}),
 };

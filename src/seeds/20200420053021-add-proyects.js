@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
@@ -14,18 +14,18 @@ module.exports = {
     */
     const proyectsData = [
       {
-        name: 'This is my first test proyect',
-        description: 'This proyect is very interesting... :)',
-        contact: 'cai@uc.cl',
-        picture: 'www.proyectimg.com',
+        name: "This is my first test proyect",
+        description: "This proyect is very interesting... :)",
+        contact: "cai@uc.cl",
+        picture: "www.proyectimg.com",
         createdAt: new Date(),
         updatedAt: new Date(),
+        userId: 9,
       },
     ];
-    
-    return queryInterface.bulkInsert('proyects', proyectsData);
+
+    return queryInterface.bulkInsert("proyects", proyectsData);
   },
 
-
-  down: (queryInterface) => queryInterface.bulkDelete('proyects', null, {}),
+  down: (queryInterface) => queryInterface.bulkDelete("proyects", null, {}),
 };
