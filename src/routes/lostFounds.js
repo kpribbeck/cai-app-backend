@@ -63,7 +63,8 @@ router.post("lost-founds.create", "/", authMiddle, async (ctx) => {
     // upload image to cloudinary and get path
     const values = Object.values(ctx.request.files);
 
-    const result = await cloudinary.v2.uploader.unsigned_upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
+    // const result = await cloudinary.v2.uploader.unsigned_upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
+    const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
 
     const path = result.eager[0].url;
 
