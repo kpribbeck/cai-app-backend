@@ -1,5 +1,6 @@
 const KoaRouter = require("koa-router");
 const authMiddle = require("../middlewares/auth");
+const cloudinary = require("../config/cloudinary");
 
 const router = new KoaRouter();
 
@@ -56,10 +57,26 @@ router.get("objects.view", "/:id", async (ctx) => {
 // @desc     Create a new object
 // @access   Private
 router.post("objects.create", "/", authMiddle, async (ctx) => {
-  const object = ctx.orm.object.build(ctx.request.body);
-  object.userId = ctx.request.user.id;
-
   try {
+
+    const object = ctx.orm.object.build(ctx.request.body);
+    object.userId = ctx.request.user.id;
+
+    console.log(ctx.request.body);
+
+    // upload image to cloudinary and get path
+    const values = Object.values(ctx.request.files);
+
+    // Only update is new image is received
+    if (values.length !== 0)
+    {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
+
+      const path = result.eager[0].url;
+
+      object.picture = path;
+    }
+
     // No need to handle duplicates of any kind here
     await object.save({
       fields: ["name", "description", "stock", "picture", "userId", "price"],
@@ -78,9 +95,10 @@ router.post("objects.create", "/", authMiddle, async (ctx) => {
 // @desc     Replace an existing object
 // @access   Private
 router.put("objects.update", "/:id", authMiddle, async (ctx) => {
-  const newObject = ctx.orm.object.build(ctx.request.body);
-
   try {
+
+    const newObject = ctx.orm.object.build(ctx.request.body);
+
     // finds id from the request url
     const url = ctx.request.url;
     let index = url.lastIndexOf("/");
@@ -98,6 +116,19 @@ router.put("objects.update", "/:id", authMiddle, async (ctx) => {
 
     // Any authenticated user can modify objects
     // so no need to check for ownership
+
+    // upload image to cloudinary and get path
+    const values = Object.values(ctx.request.files);
+
+    // Only update is new image is received
+    if (values.length !== 0)
+    {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
+
+      const path = result.eager[0].url;
+
+      newObject.picture = path;
+    }
 
     object.name = newObject.name;
     object.description = newObject.description;

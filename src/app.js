@@ -73,10 +73,10 @@ app.use(koaBody({
   keepExtensions: true,
 }));
 
-// app.use((ctx, next) => {
-//   ctx.request.method = override.call(ctx, ctx.request.body.fields || ctx.request.body);
-//   return next();
-// });
+app.use((ctx, next) => {
+  ctx.request.method = override.call(ctx, ctx.request.body.fields || ctx.request.body);
+  return next();
+});
 
 // Configure EJS views
 app.use(assets(developmentMode));

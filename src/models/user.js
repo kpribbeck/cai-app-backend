@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     contact_number: DataTypes.STRING,
-    picture: DataTypes.BLOB,
+    picture: DataTypes.STRING,
     job: DataTypes.STRING,
     is_admin: {
       type: DataTypes.INTEGER,

@@ -63,7 +63,6 @@ router.post("lost-founds.create", "/", authMiddle, async (ctx) => {
     // upload image to cloudinary and get path
     const values = Object.values(ctx.request.files);
 
-    // const result = await cloudinary.v2.uploader.unsigned_upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
     const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
 
     const path = result.eager[0].url;
@@ -122,6 +121,19 @@ router.put("lost-founds.update", "/:id", authMiddle, async (ctx) => {
 
     // Any authenticated user can modify lost-founds
     // so no need to check for ownership
+
+    // upload image to cloudinary and get path
+    const values = Object.values(ctx.request.files);
+
+    // Only update is new image is received
+    if (values.length !== 0)
+    {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 400, height: 400, crop: "scale"}]});
+
+      const path = result.eager[0].url;
+
+      newLostFound.picture = path;
+    }
 
     lostFound.name = newLostFound.name;
     lostFound.description = newLostFound.description;

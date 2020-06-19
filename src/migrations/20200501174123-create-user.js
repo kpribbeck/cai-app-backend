@@ -33,7 +33,7 @@ module.exports = {
         type: Sequelize.STRING,
       },
       picture: {
-        type: Sequelize.BLOB
+        type: Sequelize.STRING
       },
       job: {
         type: Sequelize.STRING,

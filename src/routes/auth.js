@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const config = require("../config/config.json");
 const authMiddle = require("../middlewares/auth");
 const { Op } = require("sequelize");
+const cloudinary = require("../config/cloudinary");
 
 const router = new KoaRouter();
 
@@ -103,6 +104,19 @@ router.post("users.create", "/sign-up", async (ctx) => {
       }
     }
 
+    // upload image to cloudinary and get path
+    const values = Object.values(ctx.request.files);
+
+    // Only update is new image is received
+    if (values.length !== 0)
+    {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 100, height: 100, crop: "scale"}]});
+
+      const path = result.eager[0].url;
+
+      newUser.picture = path;
+    }
+
     // User registration must be accepted by admin. is_active attribute determines wether a user has been activated.
     // is_active = -1 / 0 / 1
     // -1 = pending
@@ -137,6 +151,7 @@ router.post("users.create", "/sign-up", async (ctx) => {
             name: newUser.name,
             last_name: newUser.last_name,
             is_admin: newUser.is_admin,
+            picture: newUser.picture,
           },
         };
 
@@ -202,6 +217,7 @@ router.post("users.auth", "/log-in", async (ctx) => {
     const existingUser = await ctx.orm.user.findOne({
       where: { mail: data.mail.trim() },
     });
+
     if (!existingUser) {
       // No user found
       ctx.response.status = 400;
@@ -233,6 +249,7 @@ router.post("users.auth", "/log-in", async (ctx) => {
         name: existingUser.name,
         last_name: existingUser.last_name,
         is_admin: existingUser.is_admin,
+        picture: existingUser.picture,
       },
     };
 
@@ -325,12 +342,27 @@ router.put("users.update", "/:id", authMiddle, async (ctx) => {
     }
 
     //// Make Changes and Save
+
+    // upload image to cloudinary and get path
+    const values = Object.values(ctx.request.files);
+
+    // Only update is new image is received
+    if (values.length !== 0)
+    {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 100, height: 100, crop: "scale"}]});
+
+      const path = result.eager[0].url;
+
+      newUserData.picture = path;
+    }
+
     user.mail = newUserData.mail;
     user.name = newUserData.name;
     user.last_name = newUserData.last_name;
     user.student_number = newUserData.student_number;
     user.contact_number = newUserData.contact_number;
     user.job = newUserData.job;
+    user.picture = newUserData.picture;
 
     // Change password only if new password is specified.
     if (changePassword === 1) {
