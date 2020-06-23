@@ -309,7 +309,7 @@ router.put("users.update", "/:id", authMiddle, async (ctx) => {
     // console.log(newUserData);
     // console.log(newUserData.password);
 
-    if (newUserData.password === undefined) changePassword = 0;
+    if (newUserData.password === "undefined") changePassword = 0;
     else changePassword = 1;
 
     // Validate user data
