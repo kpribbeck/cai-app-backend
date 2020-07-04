@@ -72,6 +72,8 @@ router.post("users.create", "/sign-up", async (ctx) => {
     }
 
     const newUser = ctx.orm.user.build(ctx.request.body);
+    
+    if (newUser.picture === '') newUser.picture = "https://res-console.cloudinary.com/dkyxicgoi/thumbnails/v1/image/upload/v1593767880/YXp0a3kzaG05YXlxdzM3dXJyYnM=/preview";
 
     // Check for user uniqueness
     let foundDuplicate = await ctx.orm.user.findAll({
@@ -84,7 +86,6 @@ router.post("users.create", "/sign-up", async (ctx) => {
       ctx.response.message = "Conflict. User already exists.";
       return;
     }
-
     // Hash password
     const salt = await bcrypt.genSalt(10);
     newUser.password = await bcrypt.hash(newUser.password, salt);
@@ -108,9 +109,10 @@ router.post("users.create", "/sign-up", async (ctx) => {
     const values = Object.values(ctx.request.files);
 
     // Only update is new image is received
-    if (values.length !== 0)
-    {
-      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 100, height: 100, crop: "scale"}]});
+    if (values.length !== 0) {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {
+        eager: [{ width: 100, height: 100, crop: "scale" }],
+      });
 
       const path = result.eager[0].url;
 
@@ -220,8 +222,10 @@ router.post("users.auth", "/log-in", async (ctx) => {
 
     if (!existingUser) {
       // No user found
+
       ctx.response.status = 400;
       ctx.response.message = "Invalid Credentials. User does not exist.";
+
       return;
     }
 
@@ -233,12 +237,16 @@ router.post("users.auth", "/log-in", async (ctx) => {
     }
 
     // Make sure password match
-    const isMatch = await bcrypt.compare(data.password, existingUser.password);
-
-    if (!isMatch) {
-      ctx.response.status = 400;
-      ctx.response.message = "Invalid Credentials. Incorrect password.";
-      return;
+    if (!data.google) {
+      const isMatch = await bcrypt.compare(
+        data.password,
+        existingUser.password
+      );
+      if (!isMatch) {
+        ctx.response.status = 400;
+        ctx.response.message = "Invalid Credentials. Incorrect password.";
+        return;
+      }
     }
 
     // Send user as payload
@@ -278,7 +286,6 @@ router.post("users.auth", "/log-in", async (ctx) => {
 // @access   Private
 router.put("users.update", "/:id", authMiddle, async (ctx) => {
   try {
-    
     //// Get existing user by id and validate authentication
     // finds id from the request url
     const url = ctx.request.url;
@@ -286,6 +293,9 @@ router.put("users.update", "/:id", authMiddle, async (ctx) => {
     let userId = parseInt(url.substring(index + 1));
 
     const user = await ctx.orm.user.findByPk(userId);
+    console.log("Current User: " + JSON.stringify(user));
+    console.log("New User:" + JSON.stringify(ctx.request.body));
+
 
     // handle not found
     if (!user) {
@@ -347,9 +357,10 @@ router.put("users.update", "/:id", authMiddle, async (ctx) => {
     const values = Object.values(ctx.request.files);
 
     // Only update is new image is received
-    if (values.length !== 0)
-    {
-      const result = await cloudinary.v2.uploader.upload(values[0].path, {eager: [{width: 100, height: 100, crop: "scale"}]});
+    if (values.length !== 0) {
+      const result = await cloudinary.v2.uploader.upload(values[0].path, {
+        eager: [{ width: 100, height: 100, crop: "scale" }],
+      });
 
       const path = result.eager[0].url;
 

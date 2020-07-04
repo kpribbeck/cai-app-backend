@@ -37,7 +37,10 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     contact_number: DataTypes.STRING,
-    picture: DataTypes.STRING,
+    picture: {
+      type: DataTypes.STRING,
+      defaultValue: "https://res-console.cloudinary.com/dkyxicgoi/thumbnails/v1/image/upload/v1593767880/YXp0a3kzaG05YXlxdzM3dXJyYnM=/preview",
+    },
     job: DataTypes.STRING,
     is_admin: {
       type: DataTypes.INTEGER,
